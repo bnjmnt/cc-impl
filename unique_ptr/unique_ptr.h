@@ -45,6 +45,12 @@ class unique_ptr {
     ptr_ = ptr;
   }
 
+  void swap(unique_ptr& other) noexcept {
+    T* temp = ptr_;
+    ptr_ = other.ptr_;
+    other.ptr_ = temp;
+  }
+
  private:
   T* ptr_;
 };
