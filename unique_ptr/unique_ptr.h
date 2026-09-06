@@ -37,6 +37,14 @@ class unique_ptr {
 
   T* operator->() const noexcept { return ptr_; }
 
+  void reset(T* ptr = nullptr) noexcept {
+    if (ptr_ == ptr) {
+      return;
+    }
+    delete ptr_;
+    ptr_ = ptr;
+  }
+
  private:
   T* ptr_;
 };
