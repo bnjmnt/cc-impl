@@ -412,3 +412,60 @@ TEST(UniquePtrTest, ReleaseThenResetIsSafe) {
   EXPECT_EQ(p.get(), nullptr);
   delete released;
 }
+
+TEST(UniquePtrTest, EqualityTrueForSameRawPointer) {
+  int* raw = new int(1);
+  ben::unique_ptr<int> a(raw);
+  ben::unique_ptr<int> b(std::move(a));  // b now owns raw, a is empty
+
+  EXPECT_TRUE(b.get() == raw);  // sanity check on setup
+}
+
+TEST(UniquePtrTest, EqualityFalseForDifferentPointers) {
+  ben::unique_ptr<int> a(new int(1));
+  ben::unique_ptr<int> b(new int(1));  // same value, different address
+
+  EXPECT_TRUE(a != b);
+  EXPECT_FALSE(a == b);
+}
+
+TEST(UniquePtrTest, EqualityTrueForTwoEmptyUniquePtrs) {
+  ben::unique_ptr<int> a;
+  ben::unique_ptr<int> b;
+
+  EXPECT_TRUE(a == b);
+  EXPECT_FALSE(a != b);
+}
+
+TEST(UniquePtrTest, EqualityFalseWhenOneEmptyOneNot) {
+  ben::unique_ptr<int> a(new int(1));
+  ben::unique_ptr<int> b;
+
+  EXPECT_TRUE(a != b);
+  EXPECT_FALSE(a == b);
+}
+
+TEST(UniquePtrTest, EqualityComparesAgainstNullptr) {
+  ben::unique_ptr<int> a;
+  ben::unique_ptr<int> b(new int(1));
+
+  EXPECT_TRUE(a == nullptr);
+  EXPECT_TRUE(nullptr == a);
+  EXPECT_FALSE(b == nullptr);
+  EXPECT_FALSE(nullptr == b);
+}
+
+TEST(UniquePtrTest, InequalityComparesAgainstNullptr) {
+  ben::unique_ptr<int> a;
+  ben::unique_ptr<int> b(new int(1));
+
+  EXPECT_FALSE(a != nullptr);
+  EXPECT_TRUE(b != nullptr);
+  EXPECT_TRUE(nullptr != b);
+}
+
+TEST(UniquePtrTest, SelfEqualityIsTrue) {
+  ben::unique_ptr<int> a(new int(1));
+  EXPECT_TRUE(a == a);
+  EXPECT_FALSE(a != a);
+}
