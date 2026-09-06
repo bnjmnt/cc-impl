@@ -1,0 +1,121 @@
+#include <gtest/gtest.h>
+
+#include <type_traits>
+
+#include "unique_ptr.h"
+
+namespace {
+
+// Helper to observe destruction.
+struct DtorTracker {
+  explicit DtorTracker(bool* flag) : destroyed(flag) {}
+  ~DtorTracker() { *destroyed = true; }
+  bool* destroyed;
+};
+
+}  // namespace
+
+// --- Constructor / destructor ---
+
+TEST(UniquePtrTest, DefaultConstructedIsNull) {
+  ben::unique_ptr<int> p;
+  EXPECT_EQ(p.get(), nullptr);
+}
+
+TEST(UniquePtrTest, ConstructedFromRawPointerOwnsIt) {
+  int* raw = new int(42);
+  ben::unique_ptr<int> p(raw);
+  EXPECT_EQ(p.get(), raw);
+}
+
+TEST(UniquePtrTest, DestructorDeletesOwnedObject) {
+  bool destroyed = false;
+  {
+    ben::unique_ptr<DtorTracker> p(new DtorTracker(&destroyed));
+  }
+  EXPECT_TRUE(destroyed);
+}
+
+// --- Copy is deleted (compile-time checks) ---
+
+TEST(UniquePtrTest, IsNotCopyable) {
+  EXPECT_FALSE(std::is_copy_constructible_v<ben::unique_ptr<int>>);
+  EXPECT_FALSE(std::is_copy_assignable_v<ben::unique_ptr<int>>);
+}
+
+// --- Move constructor ---
+
+TEST(UniquePtrTest, MoveConstructorTransfersOwnership) {
+  int* raw = new int(7);
+  ben::unique_ptr<int> a(raw);
+  ben::unique_ptr<int> b(std::move(a));
+
+  EXPECT_EQ(b.get(), raw);
+  EXPECT_EQ(a.get(), nullptr);  // moved-from must be empty
+}
+
+TEST(UniquePtrTest, MoveConstructorDoesNotDoubleDelete) {
+  bool destroyed = false;
+  {
+    ben::unique_ptr<DtorTracker> a(new DtorTracker(&destroyed));
+    ben::unique_ptr<DtorTracker> b(std::move(a));
+    EXPECT_FALSE(destroyed);  // still alive, ownership just transferred
+  }
+  EXPECT_TRUE(destroyed);  // destroyed exactly once when b goes out of scope
+}
+
+// --- Move assignment ---
+
+TEST(UniquePtrTest, MoveAssignmentTransfersOwnership) {
+  int* raw = new int(9);
+  ben::unique_ptr<int> a(raw);
+  ben::unique_ptr<int> b;
+
+  b = std::move(a);
+
+  EXPECT_EQ(b.get(), raw);
+  EXPECT_EQ(a.get(), nullptr);
+}
+
+TEST(UniquePtrTest, MoveAssignmentReleasesPreviouslyOwnedObject) {
+  bool first_destroyed = false;
+  bool second_destroyed = false;
+  {
+    ben::unique_ptr<DtorTracker> a(new DtorTracker(&first_destroyed));
+    ben::unique_ptr<DtorTracker> b(new DtorTracker(&second_destroyed));
+
+    b = std::move(a);
+
+    // b's original object should be destroyed once it's overwritten.
+    EXPECT_TRUE(second_destroyed);
+    EXPECT_FALSE(first_destroyed);
+  }
+  EXPECT_TRUE(first_destroyed);
+}
+
+TEST(UniquePtrTest, SelfMoveAssignmentIsSafe) {
+  bool destroyed = false;
+  ben::unique_ptr<DtorTracker> a(new DtorTracker(&destroyed));
+
+  a = std::move(a);
+
+  // Behavior here depends on your self-assignment guard; at minimum
+  // this should not crash or double-delete under ASan.
+  SUCCEED();
+}
+
+// --- noexcept guarantees ---
+
+TEST(UniquePtrTest, MoveOperationsAreNoexcept) {
+  EXPECT_TRUE(std::is_nothrow_move_constructible_v<ben::unique_ptr<int>>);
+  EXPECT_TRUE(std::is_nothrow_move_assignable_v<ben::unique_ptr<int>>);
+}
+
+TEST(UniquePtrTest, ReturnedByValueFromFunction) {
+  auto make = []() -> ben::unique_ptr<int> {
+    return ben::unique_ptr<int>(new int(3));
+  };
+  ben::unique_ptr<int> p = make();
+  ASSERT_NE(p.get(), nullptr);
+  EXPECT_EQ(*p.get(), 3);
+}
