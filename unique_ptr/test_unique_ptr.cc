@@ -358,3 +358,57 @@ TEST(UniquePtrTest, SelfSwapIsSafe) {
 
   EXPECT_EQ(a.get(), raw);  // should be unchanged after swapping with itself
 }
+
+TEST(UniquePtrTest, ReleaseReturnsOwnedPointer) {
+  int* raw = new int(1);
+  ben::unique_ptr<int> p(raw);
+
+  int* released = p.release();
+
+  EXPECT_EQ(released, raw);
+  delete released;  // caller now owns it
+}
+
+TEST(UniquePtrTest, ReleaseClearsUniquePtr) {
+  ben::unique_ptr<int> p(new int(1));
+
+  int* released = p.release();
+
+  EXPECT_EQ(p.get(), nullptr);
+  delete released;
+}
+
+TEST(UniquePtrTest, ReleaseDoesNotDestroyObject) {
+  bool destroyed = false;
+  DtorTracker* released = nullptr;
+  {
+    ben::unique_ptr<DtorTracker> p(new DtorTracker(&destroyed));
+    released = p.release();
+
+    // release() should NOT delete the object, just give up ownership.
+    EXPECT_FALSE(destroyed);
+  }
+  // p is now out of scope and empty, so its destructor should not have
+  // touched the object either.
+  EXPECT_FALSE(destroyed);
+
+  delete released;  // manual cleanup since we own it now
+  EXPECT_TRUE(destroyed);
+}
+
+TEST(UniquePtrTest, ReleaseOnEmptyUniquePtrReturnsNullptr) {
+  ben::unique_ptr<int> p;
+  int* released = p.release();
+  EXPECT_EQ(released, nullptr);
+}
+
+TEST(UniquePtrTest, ReleaseThenResetIsSafe) {
+  int* raw = new int(1);
+  ben::unique_ptr<int> p(raw);
+
+  int* released = p.release();
+  p.reset();  // p is already empty, should be a safe no-op
+
+  EXPECT_EQ(p.get(), nullptr);
+  delete released;
+}
