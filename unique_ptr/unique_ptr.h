@@ -1,8 +1,6 @@
 #ifndef CC_IMPL_UNIQUE_PTR_UNIQUE_PTR_H
 #define CC_IMPL_UNIQUE_PTR_UNIQUE_PTR_H
 
-#include <utility>
-
 namespace ben {
 
 template <typename T>
@@ -17,7 +15,8 @@ class unique_ptr {
   unique_ptr& operator=(const unique_ptr&) noexcept = delete;
 
   unique_ptr(unique_ptr&& other) noexcept {
-    ptr_ = std::exchange(other.ptr_, nullptr);
+    ptr_ = other.ptr_;
+    other.ptr_ = nullptr;
   }
 
   unique_ptr& operator=(unique_ptr&& other) noexcept {
@@ -25,7 +24,8 @@ class unique_ptr {
       return *this;
     }
     delete ptr_;
-    ptr_ = std::exchange(other.ptr_, nullptr);
+    ptr_ = other.ptr_;
+    other.ptr_ = nullptr;
     return *this;
   }
 
