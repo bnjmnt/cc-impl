@@ -157,3 +157,39 @@ TEST(UniquePtrTest, GetReturnsSamePointerAfterMove) {
   EXPECT_EQ(b.get(), raw);
   EXPECT_EQ(a.get(), nullptr);
 }
+
+TEST(UniquePtrTest, BoolConversionFalseWhenNull) {
+  ben::unique_ptr<int> p;
+  EXPECT_FALSE(static_cast<bool>(p));
+}
+
+TEST(UniquePtrTest, BoolConversionTrueWhenOwning) {
+  ben::unique_ptr<int> p(new int(4));
+  EXPECT_TRUE(static_cast<bool>(p));
+}
+
+TEST(UniquePtrTest, BoolConversionInIfStatement) {
+  ben::unique_ptr<int> p(new int(4));
+  if (p) {
+    SUCCEED();
+  } else {
+    FAIL() << "Expected p to be truthy when owning an object";
+  }
+}
+
+TEST(UniquePtrTest, BoolConversionFalseAfterMove) {
+  ben::unique_ptr<int> a(new int(4));
+  ben::unique_ptr<int> b(std::move(a));
+
+  EXPECT_FALSE(static_cast<bool>(a));
+  EXPECT_TRUE(static_cast<bool>(b));
+}
+
+TEST(UniquePtrTest, BoolConversionIsExplicit) {
+  // This should fail to compile if operator bool() is not explicit:
+  // ben::unique_ptr<int> a(new int(1));
+  // ben::unique_ptr<int> b(new int(2));
+  // bool result = a < b;  // implicit bool->int comparison, should NOT compile
+
+  EXPECT_TRUE((!std::is_convertible_v<ben::unique_ptr<int>, bool>));
+}
