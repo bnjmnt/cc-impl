@@ -33,6 +33,10 @@ class unique_ptr {
 
   explicit operator bool() const noexcept { return ptr_ != nullptr; }
 
+  T& operator*() const noexcept { return *ptr_; }
+
+  T* operator->() const noexcept { return ptr_; }
+
  private:
   T* ptr_;
 };
