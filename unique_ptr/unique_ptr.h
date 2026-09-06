@@ -2,6 +2,7 @@
 #define CC_IMPL_UNIQUE_PTR_UNIQUE_PTR_H
 
 #include <cstddef>
+#include <utility>
 
 namespace ben {
 
@@ -91,6 +92,11 @@ bool operator!=(unique_ptr<T1>& x, std::nullptr_t y) {
 template <typename T1>
 bool operator!=(std::nullptr_t x, unique_ptr<T1>& y) {
   return x != y.get();
+}
+
+template <typename T, typename... Args>
+unique_ptr<T> make_unique(Args&&... args) {
+  return unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
 }  // namespace ben
