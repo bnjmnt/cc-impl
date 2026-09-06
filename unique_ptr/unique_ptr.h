@@ -18,8 +18,7 @@ class unique_ptr {
   unique_ptr& operator=(const unique_ptr&) noexcept = delete;
 
   unique_ptr(unique_ptr&& other) noexcept {
-    ptr_ = other.ptr_;
-    other.ptr_ = nullptr;
+    ptr_ = std::exchange(other.ptr_, nullptr);
   }
 
   unique_ptr& operator=(unique_ptr&& other) noexcept {
@@ -27,8 +26,7 @@ class unique_ptr {
       return *this;
     }
     delete ptr_;
-    ptr_ = other.ptr_;
-    other.ptr_ = nullptr;
+    ptr_ = std::exchange(other.ptr_, nullptr);
     return *this;
   }
 
@@ -40,11 +38,7 @@ class unique_ptr {
 
   T* operator->() const noexcept { return ptr_; }
 
-  T* release() noexcept {
-    T* temp = ptr_;
-    ptr_ = nullptr;
-    return temp;
-  }
+  T* release() noexcept { return std::exchange(ptr_, nullptr); }
 
   void reset(T* ptr = nullptr) noexcept {
     if (ptr_ == ptr) {
@@ -54,11 +48,7 @@ class unique_ptr {
     ptr_ = ptr;
   }
 
-  void swap(unique_ptr& other) noexcept {
-    T* temp = ptr_;
-    ptr_ = other.ptr_;
-    other.ptr_ = temp;
-  }
+  void swap(unique_ptr& other) noexcept { std::swap(ptr_, other.ptr_); }
 
  private:
   T* ptr_;
