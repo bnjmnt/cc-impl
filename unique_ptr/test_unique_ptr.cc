@@ -119,3 +119,41 @@ TEST(UniquePtrTest, ReturnedByValueFromFunction) {
   ASSERT_NE(p.get(), nullptr);
   EXPECT_EQ(*p.get(), 3);
 }
+
+TEST(UniquePtrTest, GetReturnsNullptrForDefaultConstructed) {
+  ben::unique_ptr<int> p;
+  EXPECT_EQ(p.get(), nullptr);
+}
+
+TEST(UniquePtrTest, GetReturnsOwnedPointer) {
+  int* raw = new int(5);
+  ben::unique_ptr<int> p(raw);
+  EXPECT_EQ(p.get(), raw);
+}
+
+TEST(UniquePtrTest, GetDoesNotReleaseOwnership) {
+  bool destroyed = false;
+  ben::unique_ptr<DtorTracker> p(new DtorTracker(&destroyed));
+
+  DtorTracker* raw = p.get();
+  static_cast<void>(raw);  // suppress unused-variable warning
+
+  // Calling get() should not transfer or release ownership —
+  // the object should still be alive and owned by p.
+  EXPECT_FALSE(destroyed);
+}
+
+TEST(UniquePtrTest, GetIsCallableOnConstObject) {
+  int* raw = new int(8);
+  const ben::unique_ptr<int> p(raw);
+  EXPECT_EQ(p.get(), raw);
+}
+
+TEST(UniquePtrTest, GetReturnsSamePointerAfterMove) {
+  int* raw = new int(11);
+  ben::unique_ptr<int> a(raw);
+  ben::unique_ptr<int> b(std::move(a));
+
+  EXPECT_EQ(b.get(), raw);
+  EXPECT_EQ(a.get(), nullptr);
+}
