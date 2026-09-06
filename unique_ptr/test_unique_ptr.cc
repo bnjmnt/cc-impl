@@ -193,3 +193,59 @@ TEST(UniquePtrTest, BoolConversionIsExplicit) {
 
   EXPECT_TRUE((!std::is_convertible_v<ben::unique_ptr<int>, bool>));
 }
+
+namespace {
+
+struct Point {
+  int x;
+  int y;
+  int sum() const { return x + y; }
+};
+
+}  // namespace
+
+// --- operator* ---
+
+TEST(UniquePtrTest, DereferenceReturnsReferenceToOwnedObject) {
+  ben::unique_ptr<int> p(new int(42));
+  EXPECT_EQ(*p, 42);
+}
+
+TEST(UniquePtrTest, DereferenceAllowsMutation) {
+  ben::unique_ptr<int> p(new int(1));
+  *p = 99;
+  EXPECT_EQ(*p, 99);
+}
+
+TEST(UniquePtrTest, DereferenceOnConstObjectReturnsConstReference) {
+  const ben::unique_ptr<int> p(new int(7));
+  EXPECT_EQ(*p, 7);
+  // *p = 8;  // should fail to compile if const-correct — uncomment to verify
+  // manually
+}
+
+// --- operator-> ---
+
+TEST(UniquePtrTest, ArrowAccessesMemberOfOwnedObject) {
+  ben::unique_ptr<Point> p(new Point{3, 4});
+  EXPECT_EQ(p->x, 3);
+  EXPECT_EQ(p->y, 4);
+}
+
+TEST(UniquePtrTest, ArrowAllowsCallingMemberFunction) {
+  ben::unique_ptr<Point> p(new Point{3, 4});
+  EXPECT_EQ(p->sum(), 7);
+}
+
+TEST(UniquePtrTest, ArrowAllowsMutationOfMember) {
+  ben::unique_ptr<Point> p(new Point{0, 0});
+  p->x = 10;
+  EXPECT_EQ(p->x, 10);
+}
+
+TEST(UniquePtrTest, ArrowOnConstObjectAccessesMember) {
+  const ben::unique_ptr<Point> p(new Point{5, 6});
+  EXPECT_EQ(p->x, 5);
+  // p->x = 1;  // should fail to compile if const-correct — uncomment to verify
+  // manually
+}
