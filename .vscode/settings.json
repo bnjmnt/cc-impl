@@ -1,8 +1,14 @@
 {
-  "editor.defaultFormatter": "xaver.clang-format",
+  "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
   "editor.formatOnSave": true,
   "[cpp]": {
-    "editor.defaultFormatter": "xaver.clang-format"
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
   },
-  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/build",
+    "--background-index",
+    "--clang-tidy",
+    "--header-insertion=iwyu"
+  ],
 }
