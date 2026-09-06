@@ -249,3 +249,52 @@ TEST(UniquePtrTest, ArrowOnConstObjectAccessesMember) {
   // p->x = 1;  // should fail to compile if const-correct — uncomment to verify
   // manually
 }
+
+TEST(UniquePtrTest, ResetWithNoArgsClearsOwnership) {
+  ben::unique_ptr<int> p(new int(1));
+  p.reset();
+  EXPECT_EQ(p.get(), nullptr);
+}
+
+TEST(UniquePtrTest, ResetWithNoArgsDeletesOwnedObject) {
+  bool destroyed = false;
+  ben::unique_ptr<DtorTracker> p(new DtorTracker(&destroyed));
+  p.reset();
+  EXPECT_TRUE(destroyed);
+}
+
+TEST(UniquePtrTest, ResetWithNewPointerTakesOwnership) {
+  ben::unique_ptr<int> p(new int(1));
+  int* new_raw = new int(2);
+  p.reset(new_raw);
+  EXPECT_EQ(p.get(), new_raw);
+}
+
+TEST(UniquePtrTest, ResetWithNewPointerDeletesOldObject) {
+  bool old_destroyed = false;
+  bool new_destroyed = false;
+  ben::unique_ptr<DtorTracker> p(new DtorTracker(&old_destroyed));
+
+  p.reset(new DtorTracker(&new_destroyed));
+
+  EXPECT_TRUE(old_destroyed);
+  EXPECT_FALSE(new_destroyed);  // the new one should still be alive
+}
+
+TEST(UniquePtrTest, ResetOnEmptyUniquePtrIsSafe) {
+  ben::unique_ptr<int> p;
+  p.reset();  // should not crash
+  EXPECT_EQ(p.get(), nullptr);
+}
+
+TEST(UniquePtrTest, ResetWithSamePointerIsSafe) {
+  int* raw = new int(5);
+  ben::unique_ptr<int> p(raw);
+
+  // Resetting with the pointer it already owns should not double-delete.
+  // This is a known edge case std::unique_ptr does NOT guard against by
+  // default in older implementations — worth checking how you handle it.
+  p.reset(raw);
+
+  EXPECT_EQ(p.get(), raw);
+}
