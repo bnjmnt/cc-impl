@@ -15,3 +15,4 @@ CMakeFiles/
 
 # Editor/OS cruft
 .DS_Store
+.cache/
