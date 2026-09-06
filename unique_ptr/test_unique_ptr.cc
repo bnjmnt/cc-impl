@@ -298,3 +298,63 @@ TEST(UniquePtrTest, ResetWithSamePointerIsSafe) {
 
   EXPECT_EQ(p.get(), raw);
 }
+
+TEST(UniquePtrTest, SwapExchangesOwnedPointers) {
+  int* raw_a = new int(1);
+  int* raw_b = new int(2);
+  ben::unique_ptr<int> a(raw_a);
+  ben::unique_ptr<int> b(raw_b);
+
+  a.swap(b);
+
+  EXPECT_EQ(a.get(), raw_b);
+  EXPECT_EQ(b.get(), raw_a);
+}
+
+TEST(UniquePtrTest, SwapWithEmptyUniquePtr) {
+  int* raw = new int(5);
+  ben::unique_ptr<int> a(raw);
+  ben::unique_ptr<int> b;
+
+  a.swap(b);
+
+  EXPECT_EQ(a.get(), nullptr);
+  EXPECT_EQ(b.get(), raw);
+}
+
+TEST(UniquePtrTest, SwapTwoEmptyUniquePtrs) {
+  ben::unique_ptr<int> a;
+  ben::unique_ptr<int> b;
+
+  a.swap(b);
+
+  EXPECT_EQ(a.get(), nullptr);
+  EXPECT_EQ(b.get(), nullptr);
+}
+
+TEST(UniquePtrTest, SwapDoesNotDestroyEitherObject) {
+  bool a_destroyed = false;
+  bool b_destroyed = false;
+  {
+    ben::unique_ptr<DtorTracker> a(new DtorTracker(&a_destroyed));
+    ben::unique_ptr<DtorTracker> b(new DtorTracker(&b_destroyed));
+
+    a.swap(b);
+
+    // Swapping should not delete anything — both objects still alive,
+    // just owned by the other unique_ptr now.
+    EXPECT_FALSE(a_destroyed);
+    EXPECT_FALSE(b_destroyed);
+  }
+  EXPECT_TRUE(a_destroyed);
+  EXPECT_TRUE(b_destroyed);
+}
+
+TEST(UniquePtrTest, SelfSwapIsSafe) {
+  int* raw = new int(3);
+  ben::unique_ptr<int> a(raw);
+
+  a.swap(a);
+
+  EXPECT_EQ(a.get(), raw);  // should be unchanged after swapping with itself
+}
