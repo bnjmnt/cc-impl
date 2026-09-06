@@ -30,9 +30,7 @@ TEST(UniquePtrTest, ConstructedFromRawPointerOwnsIt) {
 
 TEST(UniquePtrTest, DestructorDeletesOwnedObject) {
   bool destroyed = false;
-  {
-    ben::unique_ptr<DtorTracker> p(new DtorTracker(&destroyed));
-  }
+  { ben::unique_ptr<DtorTracker> p(new DtorTracker(&destroyed)); }
   EXPECT_TRUE(destroyed);
 }
 
@@ -197,6 +195,7 @@ TEST(UniquePtrTest, BoolConversionIsExplicit) {
 namespace {
 
 struct Point {
+  Point(int x, int y) : x(x), y(y) {}
   int x;
   int y;
   int sum() const { return x + y; }
@@ -468,4 +467,55 @@ TEST(UniquePtrTest, SelfEqualityIsTrue) {
   ben::unique_ptr<int> a(new int(1));
   EXPECT_TRUE(a == a);
   EXPECT_FALSE(a != a);
+}
+
+TEST(UniquePtrTest, MakeUniqueConstructsObject) {
+  auto p = ben::make_unique<int>(42);
+  ASSERT_NE(p.get(), nullptr);
+  EXPECT_EQ(*p, 42);
+}
+
+TEST(UniquePtrTest, MakeUniqueReturnsUniquePtrType) {
+  auto p = ben::make_unique<int>(1);
+  EXPECT_TRUE((std::is_same_v<decltype(p), ben::unique_ptr<int>>));
+}
+
+TEST(UniquePtrTest, MakeUniqueForwardsMultipleArguments) {
+  auto p = ben::make_unique<Point>(3, 4);
+  EXPECT_EQ(p->x, 3);
+  EXPECT_EQ(p->y, 4);
+}
+
+TEST(UniquePtrTest, MakeUniqueForDefaultConstructibleType) {
+  auto p = ben::make_unique<int>();
+  ASSERT_NE(p.get(), nullptr);
+}
+
+TEST(UniquePtrTest, MakeUniqueOwnershipBehavesNormally) {
+  auto p = ben::make_unique<int>(5);
+  ben::unique_ptr<int> moved(std::move(p));
+
+  EXPECT_EQ(p.get(), nullptr);
+  EXPECT_EQ(*moved, 5);
+}
+
+TEST(UniquePtrTest, MakeUniqueDestroysObjectWhenOutOfScope) {
+  bool destroyed = false;
+  {
+    auto p = ben::make_unique<DtorTracker>(&destroyed);
+    EXPECT_FALSE(destroyed);
+  }
+  EXPECT_TRUE(destroyed);
+}
+
+TEST(UniquePtrTest, MakeUniqueForwardsRvalueArguments) {
+  // Confirms perfect forwarding doesn't force an unnecessary copy for
+  // move-only argument types.
+  struct MoveOnly {
+    explicit MoveOnly(ben::unique_ptr<int> p) : inner(std::move(p)) {}
+    ben::unique_ptr<int> inner;
+  };
+
+  auto p = ben::make_unique<MoveOnly>(ben::make_unique<int>(9));
+  EXPECT_EQ(*p->inner, 9);
 }
