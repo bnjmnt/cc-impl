@@ -55,32 +55,32 @@ class unique_ptr {
 };
 
 template <typename T1, typename T2>
-bool operator==(unique_ptr<T1>& x, unique_ptr<T2>& y) {
+bool operator==(const unique_ptr<T1>& x, const unique_ptr<T2>& y) {
   return x.get() == y.get();
 }
 
 template <typename T1>
-bool operator==(unique_ptr<T1>& x, std::nullptr_t y) {
+bool operator==(const unique_ptr<T1>& x, const std::nullptr_t y) {
   return x.get() == y;
 }
 
 template <typename T1>
-bool operator==(std::nullptr_t x, unique_ptr<T1>& y) {
+bool operator==(const std::nullptr_t x, const unique_ptr<T1>& y) {
   return x == y.get();
 }
 
 template <typename T1, typename T2>
-bool operator!=(unique_ptr<T1>& x, unique_ptr<T2>& y) {
+bool operator!=(const unique_ptr<T1>& x, const unique_ptr<T2>& y) {
   return x.get() != y.get();
 }
 
 template <typename T1>
-bool operator!=(unique_ptr<T1>& x, std::nullptr_t y) {
+bool operator!=(const unique_ptr<T1>& x, const std::nullptr_t y) {
   return x.get() != y;
 }
 
 template <typename T1>
-bool operator!=(std::nullptr_t x, unique_ptr<T1>& y) {
+bool operator!=(const std::nullptr_t x, const unique_ptr<T1>& y) {
   return x != y.get();
 }
 
