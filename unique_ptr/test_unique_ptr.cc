@@ -520,6 +520,10 @@ TEST(UniquePtrTest, MakeUniqueForwardsRvalueArguments) {
   EXPECT_EQ(*p->inner, 9);
 }
 
+TEST(UniquePtrTest, ConstructorIsExplicit) {
+  EXPECT_FALSE((std::is_convertible_v<int*, ben::unique_ptr<int>>));
+}
+
 TEST(UniquePtrTest, EqualityWorksWithConstUniquePtr) {
   const ben::unique_ptr<int> a(new int(1));
   const ben::unique_ptr<int> b;
