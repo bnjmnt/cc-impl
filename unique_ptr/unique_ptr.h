@@ -9,7 +9,7 @@ namespace ben {
 template <typename T>
 class unique_ptr {
  public:
-  unique_ptr(T* ptr = nullptr) noexcept : ptr_(ptr) {}
+  explicit unique_ptr(T* ptr = nullptr) noexcept : ptr_(ptr) {}
 
   ~unique_ptr() { delete ptr_; }
 
