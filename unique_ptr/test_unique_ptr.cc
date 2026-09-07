@@ -519,3 +519,26 @@ TEST(UniquePtrTest, MakeUniqueForwardsRvalueArguments) {
   auto p = ben::make_unique<MoveOnly>(ben::make_unique<int>(9));
   EXPECT_EQ(*p->inner, 9);
 }
+
+TEST(UniquePtrTest, EqualityWorksWithConstUniquePtr) {
+  const ben::unique_ptr<int> a(new int(1));
+  const ben::unique_ptr<int> b;
+
+  EXPECT_TRUE(a != b);
+  EXPECT_TRUE(b == nullptr);
+  EXPECT_TRUE(nullptr == b);
+  EXPECT_FALSE(a == nullptr);
+}
+
+TEST(UniquePtrTest, EqualityWorksWithRvalueUniquePtr) {
+  EXPECT_TRUE(ben::make_unique<int>(1) != nullptr);
+  EXPECT_TRUE(nullptr != ben::make_unique<int>(1));
+}
+
+TEST(UniquePtrTest, EqualityWorksBetweenTwoConstUniquePtrs) {
+  const ben::unique_ptr<int> a(new int(1));
+  const ben::unique_ptr<int> b(new int(2));
+
+  EXPECT_TRUE(a != b);
+  EXPECT_FALSE(a == b);
+}
